@@ -87,22 +87,11 @@ class Product:
 "9.2천" → 9200
 ```
 
-### 0-2. `shared/marketing_detector.py` — 키워드 기반 트리거 검출
+### ~~0-2. `shared/marketing_detector.py`~~ — 폐기
 
-시험 5에서 48,000개 상품의 marketing score 계산에 필요.
-
-```python
-TREND_KEYWORDS = ["인기", "랭킹", "베스트", "HOT", "hot", "트렌드",
-                  "유행", "대세", "히트", "핫딜", "MD추천", "위클리"]
-
-BUNDLE_KEYWORDS = ["1+1", "세트", "묶음", "증정", "사은품", "추가할인",
-                   "2개", "3개", "+1", "덤", "같이구매"]
-
-CONFIDENCE_KEYWORDS = ["후기", "리얼", "검증", "입증", "보장", "추천",
-                       "누적판매", "재구매", "만족도", "품질보증"]
-```
-
-함수: `detect_triggers(product_name) → (trend_hype: 0|1, bundle: 0|1, confidence: 0|1)`
+> **폐기 (2026-04-16):** 마케팅 트리거는 시험 0 Vision LLM이 상품 제목에서 직접 추출.
+> 키워드 매칭 방식은 recall이 낮고, 확정 사항("e5/별도 LLM 비교 폐기")과 모순되므로 삭제.
+> 시험 5의 marketing_contrib는 시험 0 추출 결과(product_id 조인)로 계산한다.
 
 ### 0-3. `shared/prompt_builder.py` — system_prompt + context_sentences
 
@@ -441,7 +430,7 @@ exp04_chatbot_ttoba/
 ### 의존성
 - `shared/data_loader.py`
 - `shared/scoring/` (이미 완성)
-- `shared/marketing_detector.py`
+- 시험 0 Vision 추출 결과 (마케팅 트리거 라벨)
 - `shared/sbti_types.py`, `shared/survey_questions.py` (이미 완성)
 
 ### 파일 구조
@@ -464,13 +453,13 @@ exp05_score_distribution/
 **01_preprocess.py**
 - `shared/data_loader.py`로 3개 플랫폼 전체 로드 & 정규화
 - 플랫폼별 200개 랜덤 샘플링 (seed 고정) → 600개
-- `shared/marketing_detector.py`로 trend_hype/bundle/confidence 라벨링
+- 시험 0 Vision 추출 결과에서 trend_hype/bundle/confidence 라벨 조인 (product_id 기준)
 - 이상치 처리:
   - rating이 None → 0.0 (review_count도 0일 경우)
   - discount_rate가 None → 0
   - like_count가 None → 0 (지그재그 전체)
 - 결과: `outputs/products_600.parquet`
-- 통계 요약 출력: 플랫폼별 필드 분포, 마케팅 키워드 히트율
+- 통계 요약 출력: 플랫폼별 필드 분포, 마케팅 트리거 히트율
 
 **02_generate_users.py**
 - 16개 S-BTI 유형 × 공통질문 응답 조합
@@ -553,10 +542,9 @@ exp05_score_distribution/
 
 ### ⚠️ 우려사항 (이전 + 추가)
 
-1. **마케팅 키워드 recall이 낮을 수 있음**
-   - 키워드 매칭은 "인기상품"은 잡지만 "🔥완판임박"은 못 잡음
-   - → 분포 해석에 "marketing_contrib가 과소추정됐을 수 있음" 주석
-   - → 시험 1 마케팅 트리거 평가 완료 후 LLM 라벨로 재계산 가능하게 설계 (product_id로 조인)
+1. **마케팅 트리거 의존성: 시험 0 선행 필요**
+   - 시험 5의 marketing_contrib 계산에 시험 0 Vision LLM 추출 결과가 필요
+   - 시험 0 완료 전에는 marketing_contrib 없이 나머지 피쳐만으로 분포 확인 가능 (부분 실행)
 
 2. **에이블리 가격 없음 → context_sentences 불가**
    - 시험 5에서는 context_sentences 안 씀 → 문제 없음
@@ -578,7 +566,6 @@ exp05_score_distribution/
 ```
 [Phase 0] 공통 인프라 ──────────────────────────────────────
   ├─ shared/data_loader.py          ← 코드로 즉시
-  ├─ shared/marketing_detector.py   ← 코드로 즉시
   └─ shared/prompt_builder.py       ← docs에서 추출, 코드로 즉시
 
 [Phase 1] 즉시 시작 가능 ──────────────────────────────────
@@ -598,7 +585,7 @@ exp05_score_distribution/
 ```
 
 **코드 작성 순서 (내가 짤 것):**
-1. `shared/data_loader.py` + `shared/marketing_detector.py` + `shared/prompt_builder.py`
+1. `shared/data_loader.py` + `shared/prompt_builder.py`
 2. `exp05` 전체 (01~06)
 3. `exp00` 구조 개선 (프롬프트 버전 관리, `--prompt-version` 인자)
 4. `exp01` 전체 (01~03) — 마케팅 트리거 평가 포함 (기존 exp02 흡수)
