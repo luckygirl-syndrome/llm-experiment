@@ -22,7 +22,7 @@
 | # | 작업 | 상태 | 비고 |
 |---|------|------|------|
 | 0-1 | `shared/data_loader.py` — 3개 플랫폼 데이터 정규화 | ✅ | 한글 숫자 파서("9.2만"→92000) 포함 |
-| 0-2 | `shared/marketing_detector.py` — 키워드 기반 트리거 검출 | ✅ | 시험 5 입력 |
+| ~~0-2~~ | ~~`shared/marketing_detector.py`~~ — 폐기 (2026-04-16) | 🚫 | 마케팅 트리거는 시험 0 Vision LLM 추출로 대체 |
 | 0-3 | `shared/prompt_builder.py` — system_prompt + context_sentences 빌더 | ✅ | docs에서 코드 추출 & 모듈화 |
 | 0-4 | `exp00` Gemini 전용 정리 (GPT 코드 제거/분리) | ✅ | --prompt-version 추가, 기본 gemini만 |
 | 0-5 | `.env.example` 업데이트 (OPENAI_API_KEY 선택사항 표시) | ✅ | |
@@ -145,5 +145,5 @@
 | 단일 피쳐가 70%+ 기여 | 가중치 재조정 |
 | Match 소계가 30~50에 몰림 | style_similarity 의존도 경고 → 시험 3 중요도 ↑ |
 | Impulse × Match 산점도 한 축 몰림 | 해당 점수의 변별력 문제 → 공식 재검토 |
-| 시험 1 마케팅 트리거 평가 완료 후 | marketing_contrib 재계산 → 시험 5 분포 업데이트 |
+| 시험 1 마케팅 트리거 정확도 낮을 경우 | 프롬프트 개선 후 재추출 → 시험 5 marketing_contrib 업데이트 |
 | 시험 3 style_similarity 분포 확인 후 | Match Score에 합산 → 시험 5 산점도 재생성 |
