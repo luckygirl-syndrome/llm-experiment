@@ -1,0 +1,60 @@
+# S09 — IT 긴장관계 전용 / DITE (고집 센 고양이)
+# 분면: MID (Impulse 중간, Match 중간 — 애매한 구간에서 긴장관계가 가장 잘 드러남)
+# 비교 쌍: 없음 (긴장관계 전용 독립 시나리오)
+#
+# IT 긴장관계:
+#   T형 — 유행이 관심의 시작. 랭킹/트렌드 문구에 눈이 간다.
+#   I형 — 최종 선택은 자기 기준으로 깐깐하게 검토한다.
+#   긴장: 유행이라서 눈에 들어왔는데, 내 기준에서 진짜 맞는 건지 확신이 없다.
+
+id: S09
+label: "IT 긴장관계 / DITE — 유행 끌림 vs 자기기준 필터"
+comparison_pair: null
+
+utterances:
+  - "이거 사도 돼?"
+  - "이거 왜 이렇게 비싸?"
+  - "비슷한 거 이미 있는데..."
+
+user:
+  sbti: DITE
+  age: "25~29"
+  style_tags:
+    - 캐주얼
+    - 스트릿
+  regret_frequency: "1~2번 정도"
+  regret_reasons:
+    - "충동적으로 샀는데 안 입게 됨"
+
+product:
+  name: "[랭킹1위/이번시즌 필템] 와이드 데님 팬츠"
+  platform: 무신사
+  original_price: 72000
+  sale_price: 57600
+  discount_rate: 20
+  review_count: 980
+  rating: 4.5
+  like_count: 2800
+  trend_hype:
+    - 랭킹1위
+    - 이번시즌 필템
+  bundle: []
+  confidence: []
+  product_description: "와이드 데님 팬츠. 이번 시즌 트렌드 아이템. 캐주얼·스트릿 무드."
+
+context:
+  interest: "1주일 정도 됐어요"
+  discovery: "쇼핑 앱에서 랭킹이나 유저 추천을 둘러보다 발견했어요"
+  price_feeling: "이 정도면 괜찮아요"
+  contact_reason: "오래 고민했는데 결정이 안 나서요"
+  style_similarity: 18  # 의도적으로 애매하게 설정 — 긴장관계 극대화
+  style_context: "캐주얼·스트릿 선호 유저에게 어느 정도 맞지만, 기존 옷장과의 조합을 확인할 필요 있습니다."
+
+expected:
+  impulse_range: [55, 65]
+  match_range: [40, 52]
+  check_points:
+    - "T형 — 랭킹/유행 때문에 눈에 들어왔다는 것 짚기"
+    - "I형 — '근데 랭킹이 높다고 네 기준에 맞는 건 아니잖아'"
+    - "IT 긴장 명시: '유행이라서 끌린 건지, 직접 따져봤을 때 맞는 건지 구분해봐'"
+    - "style_similarity 18 — 애매하게 맞으므로 구체적인 기준 질문 유도"

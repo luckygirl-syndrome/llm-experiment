@@ -1,0 +1,51 @@
+# S06 — Q3-B / NIME (예리한 토끼)
+# 분면: Q3 (충동 低 + Match 高)
+# 비교 쌍: Q3 — S05 DUTO vs S06 NIME (동일 상품)
+
+id: S06
+label: "Q3-B / NIME — 충동低+잘맞음, N+I+M+E 발굴형 선택"
+comparison_pair: Q3
+
+utterances:
+  - "이거 사도 돼?"
+  - "이거 왜 이렇게 비싸?"
+  - "비슷한 거 이미 있는데..."
+
+user:
+  sbti: NIME
+  age: "25~29"
+  style_tags:
+    - 모리걸
+    - 빈티지
+  regret_frequency: "없어요"
+  regret_reasons: null
+
+product:
+  name: "울 혼방 오버핏 체크 코트"
+  platform: 무신사
+  original_price: 189000
+  sale_price: null
+  discount_rate: 0
+  review_count: 48
+  rating: 4.9
+  like_count: 230
+  trend_hype: []
+  bundle: []
+  confidence: []
+  product_description: "울 혼방 소재, 체크 패턴 오버핏 코트. 소규모 브랜드, 소량 입고. 모리걸·빈티지 무드."
+
+context:
+  interest: "2주 이상 고민했어요"
+  discovery: "쇼핑 앱에서 카테고리 검색 후 찾아보다 발견했어요"
+  price_feeling: "이 정도면 괜찮아요"
+  contact_reason: "오래 고민했는데 결정이 안 나서요"
+  style_similarity: 33
+  style_context: "모리걸·빈티지 취향 유저와 체크 울 코트 무드가 잘 맞습니다."
+
+expected:
+  impulse_range: [18, 26]
+  match_range: [76, 84]
+  check_points:
+    - "N+I형 — 직접 검색해서 2주 고민한 것 자체가 필요성 확인된 신호"
+    - "M형 — 남들 모를 때 발굴한 소브랜드, 소량 입고라는 점"
+    - "E형 — 할인 없어도 직접 발굴한 상품이면 충분하다는 판단"

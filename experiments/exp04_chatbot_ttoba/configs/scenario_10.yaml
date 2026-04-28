@@ -1,0 +1,62 @@
+# S10 — UM 긴장관계 전용 / DUMO (깐깐한 고슴도치)
+# 분면: MID (Impulse 중간, Match 중간~상위)
+# 비교 쌍: 없음 (긴장관계 전용 독립 시나리오)
+#
+# UM 긴장관계:
+#   U형 — 구매 이유를 남들에게서 찾는다. 리뷰가 많을수록 믿음이 생긴다.
+#   M형 — 남들과 똑같은 건 싫다. 리뷰가 너무 많으면 오히려 흥미를 잃는다.
+#   긴장: 검증은 원하지만 대중화되면 싫어진다. 소수 검증 구간(리뷰 ~95개)이 이 긴장의 최적 지점.
+#
+# 유저 상태: 이미 마음을 정한 상태. 또바는 "마음 정했다는 거 알겠어, 근거 같이 확인해볼게" 방향.
+
+id: S10
+label: "UM 긴장관계 / DUMO — 소수 검증 원하면서 대중화는 싫음"
+comparison_pair: null
+
+utterances:
+  - "이거 사도 돼?"
+  - "이거 왜 이렇게 비싸?"
+  - "비슷한 거 이미 있는데..."
+
+user:
+  sbti: DUMO
+  age: "20~24"
+  style_tags:
+    - 힙
+    - 빈티지
+  regret_frequency: "1~2번 정도"
+  regret_reasons:
+    - "충동적으로 샀는데 안 입게 됨"
+
+product:
+  name: "[한정수량/무신사 단독] 빈티지워시 데님 재킷"
+  platform: 무신사
+  original_price: 89000
+  sale_price: 71200
+  discount_rate: 20
+  review_count: 95   # 소수 검증 구간 — U형엔 약간 부족, M형엔 아직 대중화 전
+  rating: 4.8
+  like_count: 780
+  trend_hype: []
+  bundle: []
+  confidence:
+    - 한정수량
+    - 무신사 단독
+  product_description: "빈티지워시 가공 데님 재킷. 소량 입고, 무신사 단독 판매."
+
+context:
+  interest: "1주일 정도 됐어요"
+  discovery: "쇼핑 앱에서 카테고리 검색 후 찾아보다 발견했어요"
+  price_feeling: "좀 비싸긴 한데 못 살 정도는 아니에요"
+  contact_reason: "이미 마음은 정했는데 마지막으로 한 번만 봐줘요"
+  style_similarity: 30
+  style_context: "힙·빈티지 취향 유저와 빈티지워시 데님 재킷이 잘 맞습니다."
+
+expected:
+  impulse_range: [48, 58]
+  match_range: [62, 72]
+  check_points:
+    - "U형 — 리뷰 95개는 약한 검증이지만 평점 4.8은 신뢰 가능, 두 가지 함께 언급"
+    - "M형 — '한정수량/단독' 키워드가 M형에겐 오히려 끌리는 포인트임을 짚기"
+    - "UM 긴장 짚기: '소수한테만 검증된 게 좋은 거지, 많아지면 흥미 잃을 것 알지?'"
+    - "이미 결정한 상태 인정하되 — 근거 정리해주는 방향으로"

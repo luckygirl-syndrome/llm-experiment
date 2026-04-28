@@ -1,0 +1,55 @@
+# S08 — Q4-B / DIME (엉뚱한 개구리... 아니고 DIME = D+I+M+E)
+# 분면: Q4 (충동 低 + Match 低)
+# 비교 쌍: Q4 — S07 NUMO vs S08 DIME (동일 상품)
+
+id: S08
+label: "Q4-B / DIME — 충동低+매칭低, I형 자기기준 실패"
+comparison_pair: Q4
+
+utterances:
+  - "이거 사도 돼?"
+  - "이거 왜 이렇게 비싸?"
+  - "비슷한 거 이미 있는데..."
+
+user:
+  sbti: DIME
+  age: "20~24"
+  style_tags:
+    - 힙
+    - 스트릿
+  regret_frequency: "1~2번 정도"
+  regret_reasons:
+    - "충동적으로 샀는데 안 입게 됨"
+
+product:
+  name: "[신상/스타일리스트 픽] 새틴 미니 스커트"
+  platform: 지그재그
+  original_price: 38000
+  sale_price: null
+  discount_rate: 0
+  review_count: 62
+  rating: 3.8
+  like_count: null
+  trend_hype:
+    - 신상
+    - 스타일리스트 픽
+  bundle: []
+  confidence: []
+  product_description: "광택 새틴 소재 미니스커트. 섹시글램 무드."
+
+context:
+  interest: "오늘 처음 봤어요"
+  discovery: "인스타/틱톡/X 같은 SNS 보다가 발견했어요"
+  price_feeling: "이 정도면 괜찮아요"
+  contact_reason: "그냥 이 옷 어떤가 궁금해서요"
+  style_similarity: 2
+  style_context: "힙·스트릿 취향 유저와 섹시글램 미니스커트의 스타일이 다릅니다."
+
+expected:
+  impulse_range: [22, 34]
+  match_range: [10, 18]
+  check_points:
+    - "I형 — 직접 따져봤을 때 뭐가 끌렸는지 물어보기"
+    - "M형 — 대중적이지도 않고 스타일도 안 맞음 (M형 차별화 기준 미달)"
+    - "D형인데 오늘 처음 본 거라 충동조차 아직 안 붙은 상태 언급"
+    - "E형인데 할인도 없어서 거래 이득 없음"

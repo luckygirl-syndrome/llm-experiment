@@ -1,0 +1,57 @@
+# S02 — Q1-B / NIMO (여유로운 카피바라)
+# 분면: Q3 (NIMO에겐 같은 상품이 충동 低 + Match 高로 scoring됨)
+# 비교 쌍: Q1 — S01 DUTE vs S02 NIMO (동일 상품, 4축 완전 대조)
+#
+# 핵심: 같은 상품이 DUTE에겐 Q1(충동+잘맞음), NIMO에겐 Q3(충동낮음+잘맞음)으로 달라짐.
+#       유형별 multiplier 차이가 점수를 바꾼다는 것을 보여주는 핵심 비교.
+
+id: S02
+label: "Q1-B / NIMO — 같은 상품, N+M형 반응 (4축 완전 대조)"
+comparison_pair: Q1
+
+utterances:
+  - "이거 사도 돼?"
+  - "이거 왜 이렇게 비싸?"
+  - "비슷한 거 이미 있는데..."
+
+user:
+  sbti: NIMO
+  age: "25~29"
+  style_tags:
+    - 캐주얼
+    - 스트릿
+  regret_frequency: "없어요"
+  regret_reasons: null
+
+product:
+  name: "[트렌드/FW신상] 루즈핏 레이어드 셔츠 SET"
+  platform: 무신사
+  original_price: 59000
+  sale_price: 39000
+  discount_rate: 34
+  review_count: 2100
+  rating: 4.6
+  like_count: 5200
+  trend_hype:
+    - 트렌드
+    - FW신상
+  bundle:
+    - SET
+  confidence: []
+  product_description: "루즈핏 레이어드 셔츠 세트. 캐주얼하고 스트릿 무드."
+
+context:
+  interest: "1주일 정도 됐어요"
+  discovery: "쇼핑 앱에서 카테고리 검색 후 찾아보다 발견했어요"
+  price_feeling: "이 정도면 괜찮아요"
+  contact_reason: "오래 고민했는데 결정이 안 나서요"
+  style_similarity: 26
+  style_context: "캐주얼·스트릿 선호 유저에게 잘 맞는 스타일입니다."
+
+expected:
+  impulse_range: [30, 42]
+  match_range: [68, 76]
+  check_points:
+    - "N형 '진짜 필요한 거야?' 질문"
+    - "M형 '이미 5200명 찜한 대중적 상품' 경고"
+    - "S01 DUTE와 완전히 다른 응답 방향 확인"

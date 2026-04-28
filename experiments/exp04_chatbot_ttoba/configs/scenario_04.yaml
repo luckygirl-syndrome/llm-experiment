@@ -1,0 +1,55 @@
+# S04 — Q2-B / NUTO (우직한 곰)
+# 분면: Q2 (충동 高 + Match 低)
+# 비교 쌍: Q2 — S03 DUME vs S04 NUTO (동일 상품)
+
+id: S04
+label: "Q2-B / NUTO — 충동高+매칭低, N형 필요성 경고"
+comparison_pair: Q2
+
+utterances:
+  - "이거 사도 돼?"
+  - "이거 왜 이렇게 비싸?"
+  - "비슷한 거 이미 있는데..."
+
+user:
+  sbti: NUTO
+  age: "20~24"
+  style_tags:
+    - 페미닌
+    - 러블리
+  regret_frequency: "1~2번 정도"
+  regret_reasons:
+    - "사놓고 막상 받아보니 기대와 달랐어요"
+
+product:
+  name: "[SNS대란/1만개판매돌파] 오버핏 크롭 후드티"
+  platform: 에이블리
+  original_price: 45000
+  sale_price: 26000
+  discount_rate: 42
+  review_count: 4800
+  rating: 4.7
+  like_count: 18000
+  trend_hype:
+    - SNS대란
+    - 1만개판매돌파
+  bundle: []
+  confidence:
+    - 판매돌파
+  product_description: "크롭 기장 오버핏 후드티. 편하고 대중적인 캐주얼 스타일."
+
+context:
+  interest: "2~3일 됐어요"
+  discovery: "쇼핑 앱에서 랭킹이나 유저 추천을 둘러보다 발견했어요"
+  price_feeling: "저렴한 것 같아요"
+  contact_reason: "이미 마음은 정했는데 마지막으로 한 번만 봐줘요"
+  style_similarity: 4
+  style_context: "페미닌·러블리 취향 유저와 오버핏 크롭 후드티의 무드가 다릅니다."
+
+expected:
+  impulse_range: [65, 75]
+  match_range: [10, 18]
+  check_points:
+    - "N형 '페미닌 취향인데 이게 진짜 입겠어?' 필요성 질문"
+    - "이미 마음 정한 상태 짚기 (contact_reason 활용)"
+    - "O형이라 할인보다 '이 상품이 가치 있나' 관점으로 체크"

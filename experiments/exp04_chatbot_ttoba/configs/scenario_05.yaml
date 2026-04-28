@@ -1,0 +1,52 @@
+# S05 — Q3-A / DUTO (호기심 많은 원숭이)
+# 분면: Q3 (충동 低 + Match 高)
+# 비교 쌍: Q3 — S05 DUTO vs S06 NIME (동일 상품)
+
+id: S05
+label: "Q3-A / DUTO — 충동低+잘맞음, D형이지만 자극 없는 조용한 선택"
+comparison_pair: Q3
+
+utterances:
+  - "이거 사도 돼?"
+  - "이거 왜 이렇게 비싸?"
+  - "비슷한 거 이미 있는데..."
+
+user:
+  sbti: DUTO
+  age: "25~29"
+  style_tags:
+    - 모리걸
+    - 빈티지
+  regret_frequency: "1~2번 정도"
+  regret_reasons:
+    - "사놓고 막상 받아보니 기대와 달랐어요"
+
+product:
+  name: "울 혼방 오버핏 체크 코트"
+  platform: 무신사
+  original_price: 189000
+  sale_price: null
+  discount_rate: 0
+  review_count: 48
+  rating: 4.9
+  like_count: 230
+  trend_hype: []
+  bundle: []
+  confidence: []
+  product_description: "울 혼방 소재, 체크 패턴 오버핏 코트. 소규모 브랜드, 소량 입고. 모리걸·빈티지 무드."
+
+context:
+  interest: "2주 이상 고민했어요"
+  discovery: "쇼핑 앱에서 카테고리 검색 후 찾아보다 발견했어요"
+  price_feeling: "좀 비싸긴 한데 못 살 정도는 아니에요"
+  contact_reason: "오래 고민했는데 결정이 안 나서요"
+  style_similarity: 31
+  style_context: "모리걸·빈티지 취향 유저와 체크 울 코트 무드가 잘 맞습니다."
+
+expected:
+  impulse_range: [28, 38]
+  match_range: [72, 80]
+  check_points:
+    - "D형인데 할인도 없고 리뷰도 적은 조용한 상품을 2주 고민한 것이 신호 — '이런 상품에 이렇게 오래 끌렸다는 건 진짜야'"
+    - "O형이라 할인 없어도 물건 자체 가치로 판단 가능"
+    - "impulse 낮지만 match 높다는 근거로 조건부 격려"

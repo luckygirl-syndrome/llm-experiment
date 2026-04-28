@@ -1,0 +1,53 @@
+# S07 — Q4-A / NUMO (느긋한 거북이)
+# 분면: Q4 (충동 低 + Match 低)
+# 비교 쌍: Q4 — S07 NUMO vs S08 DIME (동일 상품)
+
+id: S07
+label: "Q4-A / NUMO — 충동低+매칭低, U형 검증 실패"
+comparison_pair: Q4
+
+utterances:
+  - "이거 사도 돼?"
+  - "이거 왜 이렇게 비싸?"
+  - "비슷한 거 이미 있는데..."
+
+user:
+  sbti: NUMO
+  age: "20~24"
+  style_tags:
+    - 빈티지
+    - 모리걸
+  regret_frequency: "없어요"
+  regret_reasons: null
+
+product:
+  name: "[신상/스타일리스트 픽] 새틴 미니 스커트"
+  platform: 지그재그
+  original_price: 38000
+  sale_price: null
+  discount_rate: 0
+  review_count: 62
+  rating: 3.8
+  like_count: null  # 지그재그는 찜 기능 없음
+  trend_hype:
+    - 신상
+    - 스타일리스트 픽
+  bundle: []
+  confidence: []
+  product_description: "광택 새틴 소재 미니스커트. 섹시글램 무드."
+
+context:
+  interest: "오늘 처음 봤어요"
+  discovery: "인스타/틱톡/X 같은 SNS 보다가 발견했어요"
+  price_feeling: "이 정도면 괜찮아요"
+  contact_reason: "그냥 이 옷 어떤가 궁금해서요"
+  style_similarity: 3
+  style_context: "빈티지·모리걸 취향 유저와 섹시글램 미니스커트의 스타일이 다릅니다."
+
+expected:
+  impulse_range: [20, 30]
+  match_range: [12, 20]
+  check_points:
+    - "U형인데 리뷰 62개 + 평점 3.8 — 검증이 부족하고 품질 신뢰도 낮음"
+    - "M+O형 — 스타일 차별화 기준 + 물건 가치 기준 모두 미달"
+    - "'오늘 처음 봤고 SNS에서 흘러온 건데, 뭐가 끌렸어?' 맥락 질문"
