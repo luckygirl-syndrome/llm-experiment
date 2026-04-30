@@ -51,8 +51,9 @@ context:
   style_context: "캐주얼·스트릿 선호 유저에게 어느 정도 맞지만, 기존 옷장과의 조합을 확인할 필요 있습니다."
 
 expected:
-  impulse_range: [55, 65]
-  match_range: [40, 52]
+  impulse_score: 57
+  match_score: 66
+  match_breakdown: "style(18) + price(18) + interest(20) + discovery(10)"
   check_points:
     - "T형 — 랭킹/유행 때문에 눈에 들어왔다는 것 짚기"
     - "I형 — '근데 랭킹이 높다고 네 기준에 맞는 건 아니잖아'"
