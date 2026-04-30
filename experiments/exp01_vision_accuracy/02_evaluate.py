@@ -2,24 +2,23 @@
 
 Inputs:
   gt/gt_labels.jsonl
-  ../exp00_vision_extraction/results/gemini_v2/*.jsonl
+  ../exp00_vision_extraction/results/gemini_v3/*.jsonl  (없으면 gemini_v2 fallback)
 
 Outputs:
-  outputs/eval_results.parquet  (이미지별·필드별 결과 longform)
-  outputs/summary.json          (필드별 정확도, 마케팅 P/R/F1, 플래그 카운트 등)
+  outputs/eval_results.parquet
+  outputs/summary.json
 
 에러 분류:
-  correct   : 둘 다 값 있고 비교 통과
-  null_ok   : GT=null, 추출=null
-  null_miss : GT는 값 있는데 추출=null (놓침)
-  wrong     : 비교 실패
+  correct, null_ok, null_miss, wrong
 
-특수 플래그:
-  follower_confusion  : wishlist_count 차이가 5배 이상
-  coupon_confusion    : 추출 discounted_price < GT × 0.85
+평가 정책 (v3):
+  - wishlist_count 평가 제거 (GT 라벨이 어렵고 follower 혼동이 큼)
+  - delivery_info: BERTScore (lang='ko', threshold=0.7) — 의미 유사도 비교
+  - 마케팅 트리거: strict 모드. 추출이 1로 잡았을 때 marketing_phrases가 화이트리스트
+    키워드와 매칭돼야 진짜 1로 인정. 매칭 실패 시 evaluate에선 0으로 강등.
 
 Usage:
-  python 02_evaluate.py
+  python 02_evaluate.py [--pred-dir <path>] [--no-bertscore]
 """
 
 import argparse
@@ -35,13 +34,38 @@ from sklearn.metrics import precision_recall_fscore_support
 
 BASE = Path(__file__).resolve().parent
 DEFAULT_GT = BASE / "gt" / "gt_labels.jsonl"
-DEFAULT_PRED_DIR = BASE.parent / "exp00_vision_extraction" / "results" / "gemini_v2"
+DEFAULT_PRED_DIR = BASE.parent / "exp00_vision_extraction" / "results" / "gemini_v3"
 DEFAULT_OUT = BASE / "outputs"
 
-# 추출 → GT 키 매핑 (이름이 다른 경우)
+# 마케팅 트리거 화이트리스트 (v3 프롬프트와 동일)
+MARKETING_WHITELIST = {
+    "trend_hype": {"BEST", "랭킹", "1위", "인기", "품절임박", "재입고", "주문폭주",
+                   "HOT", "대란", "핫딜", "트렌드", "리오더", "REORDER", "RANKING"},
+    "bundle":     {"1+1", "2+1", "세트특가", "증정", "사은품", "추가증정",
+                   "추가구성", "패키지"},
+    "confidence": {"누적판매", "재구매율", "MD추천", "리얼후기", "후기", "리뷰",
+                   "베스트리뷰", "인증", "특허", "공식"},
+}
+
+
+def phrases_match_whitelist(phrases, axis):
+    """marketing_phrases 중 하나라도 axis 화이트리스트와 substring 매칭되면 True."""
+    if not phrases:
+        return False
+    wl = MARKETING_WHITELIST.get(axis, set())
+    for p in phrases:
+        s = str(p).upper()
+        for kw in wl:
+            if kw.upper() in s:
+                return True
+    return False
+
+# 추출 → GT 키 매핑 (v2 결과 호환용)
+# v3 부터는 추출 키가 GT 양식과 일치(has_discount, brand, delivery_info, delivery_fee)이므로
+# 이 매핑은 사용되지 않는다 — 그대로 두되 v3 결과에선 PRED 자체에 GT 키가 있어 매핑이 트리거되지 않음.
 PRED_TO_GT_KEY = {
-    "is_discounted": "has_discount",
-    "brand_name": "brand",
+    "is_discounted": "has_discount",  # v2 boolean → GT 0/1
+    "brand_name": "brand",            # v2
 }
 
 # 비교 필드별 결과 행을 만든다.
@@ -90,6 +114,33 @@ def cmp_exact(gt, pred):
     if _is_null(gt):
         return "wrong", "gt_null_pred_value"
     return ("correct" if gt == pred else "wrong"), None
+
+
+def _norm_shot_type(v):
+    """GT('모델착용샷'/'단독샷'/'행거샷')와 추출('모델 착용샷'/'흰 배경 단독샷'/...)을
+    공통 키로 정규화."""
+    if v is None:
+        return None
+    s = str(v).replace(" ", "").replace("　", "")
+    if "모델착용샷" in s:
+        return "모델착용샷"
+    if "단독샷" in s:  # '흰배경단독샷' 포함
+        return "단독샷"
+    if "행거샷" in s:
+        return "행거샷"
+    return "기타"
+
+
+def cmp_shot_type(gt, pred):
+    if _is_null(gt) and _is_null(pred):
+        return "null_ok", None
+    if _is_null(pred):
+        return "null_miss", None
+    if _is_null(gt):
+        return "wrong", "gt_null_pred_value"
+    g, p = _norm_shot_type(gt), _norm_shot_type(pred)
+    detail = None if g == p else f"gt='{gt}'(={g}), pred='{pred}'(={p})"
+    return ("correct" if g == p else "wrong"), detail
 
 
 def cmp_int_tol(gt, pred, abs_tol):
@@ -190,6 +241,49 @@ def cmp_string_contains(gt, pred):
     return ("correct" if (g in p or p in g) else "wrong"), None
 
 
+# BERTScore (lazy-init, 한 번만 모델 로드)
+_BERT_SCORER = None
+_BERT_DISABLED = False
+
+
+def _bert_init():
+    """첫 호출 때만 모델 로드. 실패 시 fallback으로 contains 비교."""
+    global _BERT_SCORER, _BERT_DISABLED
+    if _BERT_SCORER is not None or _BERT_DISABLED:
+        return
+    try:
+        from bert_score import BERTScorer
+        _BERT_SCORER = BERTScorer(lang="ko", rescale_with_baseline=False, device="cpu")
+        print("[INFO] BERTScore 모델 로드 완료 (lang=ko)")
+    except Exception as e:
+        print(f"[WARN] BERTScore 사용 불가 ({e}). contains 비교로 대체.")
+        _BERT_DISABLED = True
+
+
+def cmp_bertscore(gt, pred, threshold=0.7):
+    """delivery_info 같은 의미 유사도 비교. F1 ≥ threshold면 correct."""
+    if _is_null(gt) and _is_null(pred):
+        return "null_ok", None
+    if _is_null(pred):
+        return "null_miss", None
+    if _is_null(gt):
+        return "wrong", "gt_null_pred_value"
+
+    _bert_init()
+    if _BERT_DISABLED:
+        return cmp_string_contains(gt, pred)
+
+    g, p = str(gt).strip(), str(pred).strip()
+    if not g or not p:
+        return "wrong", "empty"
+    try:
+        P, R, F1 = _BERT_SCORER.score([p], [g])
+        f1 = float(F1[0])
+        return ("correct" if f1 >= threshold else "wrong"), f"bertF1={f1:.3f}"
+    except Exception as e:
+        return "wrong", f"bertscore_error: {e}"
+
+
 # ---------------------------------------------------------------------------
 # 필드 비교 정의
 # ---------------------------------------------------------------------------
@@ -244,11 +338,10 @@ def compare_record(gt: dict, pred: dict):
     # 6) review_score (abs ≤ 0.1)
     add("review_score", *cmp_float_tol(gt.get("review_score"), _get_pred("review_score"), 0.1))
 
-    # 7) wishlist_count (rel ≤ 0.10)
-    add("wishlist_count", *cmp_relative(gt.get("wishlist_count"), _get_pred("wishlist_count"), 0.10))
+    # 7) wishlist_count: v3 정책상 추출도 안 하고 평가도 안 함
 
-    # 8) shot_type, visibility (exact)
-    add("shot_type", *cmp_exact(gt.get("shot_type"), _get_pred("shot_type")))
+    # 8) shot_type (정규화 후 비교 — GT '모델착용샷' ↔ 추출 '모델 착용샷' 호환), visibility (exact)
+    add("shot_type", *cmp_shot_type(gt.get("shot_type"), _get_pred("shot_type")))
     add("visibility", *cmp_exact(gt.get("visibility"), _get_pred("visibility")))
 
     # 9) style_keywords (multi-label F1)
@@ -260,26 +353,45 @@ def compare_record(gt: dict, pred: dict):
         **{f"sk_{k}": v for k, v in (sk_detail or {}).items()},
     })
 
-    # 10) marketing axes (per-axis exact 0/1)
+    # 10) marketing axes — strict 모드:
+    #     추출이 1로 잡았어도 marketing_phrases가 화이트리스트와 매칭 안되면 0으로 강등.
+    #     이로써 "1로 잡고 phrase는 비어있거나 카테고리 단어"인 case는 strict하게 wrong.
+    pred_phrases = _get_pred("marketing_phrases") or []
     for axis in MARKETING_AXES:
-        add(axis, *cmp_exact(gt.get(axis), _get_pred(axis)))
+        gt_v = gt.get(axis)
+        pred_v_raw = _get_pred(axis)
+        # strict 강등: 추출=1 인데 phrase가 화이트리스트 매칭 못 하면 0으로 본다
+        if pred_v_raw == 1 and not phrases_match_whitelist(pred_phrases, axis):
+            pred_v = 0
+            strict_note = f"strict: pred=1→0 (phrases={pred_phrases})"
+        else:
+            pred_v = pred_v_raw
+            strict_note = None
+        status, det = cmp_exact(gt_v, pred_v)
+        if strict_note:
+            det = f"{det or ''} [{strict_note}]".strip()
+        add(axis, status, det)
 
-    # 11) delivery_info, brand (포함)
-    add("delivery_info", *cmp_string_contains(gt.get("delivery_info"), _get_pred("delivery_info")))
+    # 11) delivery_info, delivery_fee, brand
+    # v3: 둘 다 분리 → BERTScore 비교
+    # v2: 합쳐 비교 (fallback)
+    pred_delivery_info = _get_pred("delivery_info")
+    pred_delivery_fee = _get_pred("delivery_fee")
+    if pred_delivery_fee is None:
+        # v2 결과
+        gt_delivery_combined = " ".join(filter(None, [
+            str(gt.get("delivery_info") or ""),
+            str(gt.get("delivery_fee") or ""),
+        ])).strip() or None
+        add("delivery_info", *cmp_bertscore(gt_delivery_combined, pred_delivery_info))
+    else:
+        # v3 결과
+        add("delivery_info", *cmp_bertscore(gt.get("delivery_info"), pred_delivery_info))
+        add("delivery_fee", *cmp_bertscore(gt.get("delivery_fee"), pred_delivery_fee))
     add("brand", *cmp_string_contains(gt.get("brand"), _get_pred("brand")))
 
-    # 12) 특수 플래그
+    # 12) 특수 플래그 (v3: wishlist 추출 안 하므로 follower_confusion 제거. 쿠폰 혼동만)
     flags = []
-    gt_w = gt.get("wishlist_count")
-    pr_w = _get_pred("wishlist_count")
-    if gt_w not in (None, 0) and pr_w not in (None, 0):
-        try:
-            ratio = max(float(pr_w) / float(gt_w), float(gt_w) / float(pr_w))
-            if ratio >= 5.0:
-                flags.append({"type": "follower_confusion", "gt": gt_w, "pred": pr_w, "ratio": ratio})
-        except (TypeError, ValueError, ZeroDivisionError):
-            pass
-
     gt_dp = gt.get("discounted_price")
     pr_dp = _get_pred("discounted_price")
     if gt_dp and pr_dp:
@@ -296,11 +408,11 @@ def aggregate_summary(df: pd.DataFrame, gts, preds):
     """필드별 정확도 + 마케팅 P/R/F1."""
     summary = {"per_field": {}, "marketing_metrics": {}, "n_images": int(df["image_id"].nunique())}
 
-    # 필드별 status 카운트
+    # 필드별 status 카운트 (excluded는 분모/분자 모두 제외)
     for field, sub in df.groupby("field"):
         cnt = sub["status"].value_counts().to_dict()
         total = len(sub)
-        evaluatable = total - cnt.get("null_ok", 0)  # null_ok는 분모에서 빼는 게 정직 (양쪽 다 null이면 평가 의미 없음)
+        evaluatable = total - cnt.get("null_ok", 0) - cnt.get("excluded", 0)
         correct = cnt.get("correct", 0)
         accuracy = correct / evaluatable if evaluatable else None
         summary["per_field"][field] = {
@@ -309,6 +421,7 @@ def aggregate_summary(df: pd.DataFrame, gts, preds):
             "wrong": cnt.get("wrong", 0),
             "null_miss": cnt.get("null_miss", 0),
             "null_ok": cnt.get("null_ok", 0),
+            "excluded": cnt.get("excluded", 0),
             "accuracy_excl_null_ok": accuracy,
         }
 
@@ -330,9 +443,14 @@ def aggregate_summary(df: pd.DataFrame, gts, preds):
             if img_id not in pred_lookup:
                 continue
             gv = gt.get(axis)
-            pv = pred_lookup[img_id].get(axis)
-            if gv is None or pv is None:
+            pv_raw = pred_lookup[img_id].get(axis)
+            if gv is None or pv_raw is None:
                 continue
+            # strict 강등: pred=1인데 phrase가 화이트리스트와 매칭 안되면 0으로 본다
+            phrases = pred_lookup[img_id].get("marketing_phrases") or []
+            pv = pv_raw
+            if pv_raw == 1 and not phrases_match_whitelist(phrases, axis):
+                pv = 0
             y_true.append(int(gv))
             y_pred.append(int(pv))
         if y_true:
@@ -344,6 +462,7 @@ def aggregate_summary(df: pd.DataFrame, gts, preds):
                 "precision": float(p),
                 "recall": float(r),
                 "f1": float(f1),
+                "note": "strict (whitelist 매칭 없으면 pred=1→0 강등)",
             }
 
     return summary

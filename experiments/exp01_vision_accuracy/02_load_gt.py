@@ -27,13 +27,15 @@ HEADER_RENAME = {
 }
 
 # JSONL에 그대로 키로 보낼 필드 (style_keyword_*, 메타 컬럼 제외)
+# marketing_phrases는 새 GT 엑셀에서 빠짐 → 빈 list로 채움 (evaluate에서 skip 처리)
+# delivery_fee는 새로 추가됨 (배송 비용 텍스트)
 KEEP_FIELDS = {
     "image_id", "platform",
     "product_name", "original_price", "has_discount", "discounted_price",
     "discount_rate", "review_count", "review_score", "wishlist_count",
     "shot_type", "visibility",
-    "trend_hype", "bundle", "confidence", "marketing_phrases",
-    "delivery_info", "brand",
+    "trend_hype", "bundle", "confidence",
+    "delivery_info", "delivery_fee", "brand",
 }
 
 NUMERIC_INT = {"original_price", "discounted_price", "discount_rate",
@@ -51,6 +53,9 @@ def normalize_cell(v):
     return v
 
 
+_NUM_RE = __import__("re").compile(r"-?\d+(?:\.\d+)?")
+
+
 def to_int(v):
     if v is None:
         return None
@@ -59,7 +64,8 @@ def to_int(v):
     s = str(v).replace(",", "").strip()
     if not s:
         return None
-    return int(float(s))
+    m = _NUM_RE.search(s)  # "9999+", "999개" 같은 표기 허용
+    return int(float(m.group())) if m else None
 
 
 def to_float(v):
@@ -70,7 +76,8 @@ def to_float(v):
     s = str(v).replace(",", "").strip()
     if not s:
         return None
-    return float(s)
+    m = _NUM_RE.search(s)
+    return float(m.group()) if m else None
 
 
 def parse_args():
@@ -122,25 +129,37 @@ def main():
             sk = [cells.get(f"style_keyword_{i}") for i in (1, 2, 3)]
             sk = [x for x in sk if x]
 
-            # marketing_phrases: 쉼표 구분 문자열 → list
+            # marketing_phrases: 새 GT 엑셀은 marketing_phrases 컬럼이 없고
+            # "비고" / "비고 (애매한 건 주황)" 컬럼에 마케팅 문구를 적어둠.
+            # 우선순위: marketing_phrases 컬럼 > 비고 컬럼.
+            # 구분자는 "/", ",", "·" 모두 허용.
             mp_raw = cells.get("marketing_phrases")
+            if not mp_raw:
+                # 비고 컬럼 찾기 (헤더 이름이 "비고"로 시작하는 모든 컬럼)
+                for h, v in cells.items():
+                    if h and isinstance(h, str) and h.strip().startswith("비고") and v:
+                        mp_raw = v
+                        break
             if mp_raw:
-                mp = [s.strip() for s in str(mp_raw).split(",") if s.strip()]
+                # 여러 구분자 split
+                import re as _re
+                tokens = _re.split(r"[/,·、|]+", str(mp_raw))
+                mp = [t.strip() for t in tokens if t and t.strip()]
             else:
                 mp = []
 
             record = {}
             for k in KEEP_FIELDS:
                 v = cells.get(k)
-                if k == "marketing_phrases":
-                    record[k] = mp
-                elif k in NUMERIC_INT:
+                if k in NUMERIC_INT:
                     record[k] = to_int(v)
                 elif k in NUMERIC_FLOAT:
                     record[k] = to_float(v)
                 else:
                     record[k] = v
             record["style_keywords"] = sk
+            # GT에 marketing_phrases 컬럼이 빠졌어도 호환성 위해 기록 (비고 활용 가능)
+            record["marketing_phrases"] = mp
 
             # ---- 일관성 검증 ----
             img_id = record["image_id"]
